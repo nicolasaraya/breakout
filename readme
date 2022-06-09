@@ -1,0 +1,2 @@
+pip install ale-py
+ale-import-roms roms/
