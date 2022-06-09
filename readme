@@ -1,3 +1,7 @@
+Requeriments:
+	gym
+	ale_py
+	
+
 pip install ale-py
-ale-import-roms ROMS
-python3 code.py
+ale-import-roms roms/
