@@ -1,7 +1,9 @@
 Requeriments:
 	gym
 	ale_py
-	
+	VS Build Toolkit
+
 
 pip install ale-py
+pip install gym
 ale-import-roms roms/
