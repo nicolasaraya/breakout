@@ -1,10 +1,11 @@
+from baselines.common.atari_wrappers import wrap_deepmind
 from ale_py import ALEInterface
 from ale_py.roms import Breakout
 import time
 import gym
-import keras_gym as kg
 import numpy as np
 from collections import deque
+'''''
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -24,7 +25,7 @@ def create_q_model():
     action = layers.Dense(4, activation="linear")(layer5)
 
     return keras.Model(inputs=inputs, outputs=action)
-
+'''
 memory = deque(maxlen = 100000)
 
 ale = ALEInterface()
@@ -33,8 +34,7 @@ env = gym.make('ALE/Breakout-v5',        # Use all actions
     render_mode='human'                  # None | human | rgb_array
 )
 
-env = kg.wrappers.ImagePreprocessor(env grayscale=True)     # NO RGB*
-env = kg.wrappers.FrameStacker(env, num_frames=4)           # STACK DE 4 FRAMES
+env = wrap_deepmind(env, frame_stack=True, scale=True)
 
 height, width, channels = env.observation_space.shape
 actions = env.action_space.n
@@ -42,7 +42,7 @@ env.unwrapped.get_action_meanings()
 max_steps = 1000;
 episode = 0;
 while True:
-    state = np.array(env.reset()/255)
+    state = np.array(env.reset())
     score = 0
     episode += 1
     for step in range(1, max_steps):
@@ -50,10 +50,9 @@ while True:
         action = np.random.choice(actions)
         new_state, reward, done, info = env.step(action)
         score += reward
-        new_state = np.array(new_state/255.0)
+        new_state = np.array(new_state)
         memory.append((new_state, action, reward, state, done))
-        state = new_state.sort
-        print(state)
+        print(new_state.shape)
         if done:
             break
         
