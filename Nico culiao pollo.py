@@ -1,5 +1,6 @@
-from math import gamma
+from ctypes import sizeof
 import numpy as np
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -10,13 +11,12 @@ from ale_py import ALEInterface
 from ale_py.roms import Breakout
 from collections import deque
 
-
 def create_q_model():
     # Network defined by the Deepmind paper
     inputs = layers.Input(shape=(84, 84, 4))
 
     # Convolutions on the frames on the screen
-    layer1 = layers.Conv2D(32, 8, strides=4, activation="relu")(inputs)
+    layer1 = layers.Conv2D(128, 8, strides=4, activation="relu")(inputs)
     layer2 = layers.Conv2D(64, 4, strides=2, activation="relu")(layer1)
     layer3 = layers.Conv2D(64, 3, strides=1, activation="relu")(layer2)
 
@@ -31,8 +31,8 @@ memory = deque(maxlen = 100000)
 
 ale = ALEInterface()
 ale.loadROM(Breakout)
-env = gym.make('ALE/Breakout-v5',        # Use all actions
-    render_mode='rgb_array'                  # None | human | rgb_array
+env = gym.make('ALE/Breakout-v5',           # Use all actions
+    render_mode='rgb_array'                 # None | human | rgb_array
 )
 env = wrap_deepmind(env, frame_stack=True, scale=True)
 
@@ -42,25 +42,30 @@ optimizer = keras.optimizers.Adam(learning_rate=0.001)
 loss_function = keras.losses.Huber()
 
 epsilon = 1.0
-epsilon_min = 0.01
-random_episodes = 50
-delta_epsilon = 0.99 / 100000
+epsilon_min = 0.1
+random_episodes = 1000
+delta_epsilon = 1 / 10000
 
-batch_size = 32
+batch_size = 128
 gamma = 0.99
-
-update_target_network = 10000
 
 #height, width, channels = env.observation_space.shape
 actions = env.action_space.n
 #env.unwrapped.get_action_meanings()
-max_steps = 10000
+max_steps = 50000
 episode = 0
-max_score = 0
+score_prom = 0
+score_prom_history = []
+episode_history = []
+max_score_prom = -8
+
 while True:
     state = np.array(env.reset())
     score = 0
     episode += 1
+    if(episode > random_episodes):
+            epsilon -= delta_epsilon
+
     for step in range(1, max_steps):
         #time.sleep(0.1)
         if(episode < random_episodes or epsilon > np.random.rand(1)[0]):
@@ -75,15 +80,16 @@ while True:
             action = tf.argmax(action_probs[0]).numpy()
 
         new_state, reward, done, info = env.step(action)
+        if(done and reward < 40):
+            reward -= 4
+
         score += reward
         new_state = np.array(new_state)
         memory.append((state, new_state, action, reward, done))
         state = new_state
-        if(episode > random_episodes):
-            epsilon -= delta_epsilon
         epsilon = max(epsilon, epsilon_min)
 
-        if(len(memory) >= batch_size):
+        if(step%5 == 0 and len(memory) >= batch_size):
             indices = np.random.choice(range(len(memory)), size = batch_size)
             
             # Using list comprehension to sample from replay buffer
@@ -124,17 +130,24 @@ while True:
 
         if done:
             break
+    score_prom += score/10.0
     # update the the target network with new weights
-    if(episode%10 == 0):
-        model_target.set_weights(model.get_weights())
-    # Log details
-    #template = "running reward: {:.2f} at episode {}, frame count {}"
-    #print(template.format(score, episode, step))
+    if(episode > 9 and episode%10 == 0):
+        score_prom_history.append( score_prom )
+        episode_history.append(episode)
+        if(episode > 99 and episode%100 == 0):
+            print('Episode:{} Score:{} Epsilon:{}'.format(episode, round(score_prom, 2), round(epsilon,3)))
+            plt.plot(episode_history, score_prom_history)
+            plt.savefig('figure/Episode:{}_Score:{}.png')
 
-    print('Episode:{} Score:{} Epsilon:{}'.format(episode, score, epsilon))
-    if(score > max_score):
-        model.save_weights('weights/Episode_{}_Score_{}.h5'.format(episode,score))
-        max_score = score
+        model_target.set_weights(model.get_weights())
+        if(score_prom > max_score_prom):
+            max_score_prom = score_prom
+            model.save_weights('weights/Episode_{}_Score_{}.h5'.format(episode,round(score_prom, 2)))
+            print('SAVE Episode:{} Score:{}'.format(episode, round(score_prom, 2)))
+
+        score_prom = 0
+        
     if(score > 40):
         break
 

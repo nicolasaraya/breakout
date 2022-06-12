@@ -37,7 +37,7 @@ env = gym.make('ALE/Breakout-v5',        # Use all actions
 env = wrap_deepmind(env, frame_stack=True, scale=True)
 
 model = create_q_model()
-model.load_weights('weights\Episode_68_Score_4.0.h5')
+model.load_weights('weights\Episode_1341_Score_6.0.h5')
 
 #height, width, channels = env.observation_space.shape
 actions = env.action_space.n
@@ -57,7 +57,11 @@ while True:
         score += reward
         new_state = np.array(new_state)
         memory.append((state, new_state, action, reward, done))
-
+        if(done):
+            if(score > 40):
+                break
+            else:
+                env.step(1)
     print('Episode:{} Score:{}'.format(episode, score))
 
 env.close()
