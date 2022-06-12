@@ -64,7 +64,8 @@ while True:
     score = 0
     episode += 1
     if(episode > random_episodes):
-            epsilon -= delta_epsilon
+        epsilon -= delta_epsilon
+        epsilon = max(epsilon, epsilon_min)
 
     for step in range(1, max_steps):
         #time.sleep(0.1)
@@ -87,7 +88,6 @@ while True:
         new_state = np.array(new_state)
         memory.append((state, new_state, action, reward, done))
         state = new_state
-        epsilon = max(epsilon, epsilon_min)
 
         if(step%4 == 0 and len(memory) >= batch_size):
             indices = np.random.choice(range(len(memory)), size = batch_size)
