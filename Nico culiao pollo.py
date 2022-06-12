@@ -27,8 +27,7 @@ def create_q_model():
 
     return keras.Model(inputs=inputs, outputs=action)
 
-memory = deque(maxlen = 400000)
-score_history = []
+memory = deque(maxlen = 100000)
 
 ale = ALEInterface()
 ale.loadROM(Breakout)
@@ -39,13 +38,13 @@ env = wrap_deepmind(env, frame_stack=True, scale=True)
 
 model = create_q_model()
 model_target = create_q_model()
-optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=0.95)
+optimizer = keras.optimizers.Adam(learning_rate=0.001)
 loss_function = keras.losses.Huber()
 
 epsilon = 1.0
 epsilon_min = 0.01
-random_frames = 100000
-delta_epsilon = 0.99 / 1000000
+random_episodes = 50
+delta_epsilon = 0.99 / 100000
 
 batch_size = 32
 gamma = 0.99
@@ -54,9 +53,8 @@ update_target_network = 10000
 
 #height, width, channels = env.observation_space.shape
 actions = env.action_space.n
-env.unwrapped.get_action_meanings()
+#env.unwrapped.get_action_meanings()
 max_steps = 10000
-running_reward = 0
 episode = 0
 max_score = 0
 while True:
@@ -65,7 +63,7 @@ while True:
     episode += 1
     for step in range(1, max_steps):
         #time.sleep(0.1)
-        if(step < random_frames or epsilon > np.random.rand(1)[0]):
+        if(episode < random_episodes or epsilon > np.random.rand(1)[0]):
             action = np.random.choice(actions)
         else:    
             # Predict action Q-values
@@ -80,11 +78,12 @@ while True:
         score += reward
         new_state = np.array(new_state)
         memory.append((state, new_state, action, reward, done))
-        epsilon -= delta_epsilon
+        state = new_state
+        if(episode > random_episodes):
+            epsilon -= delta_epsilon
         epsilon = max(epsilon, epsilon_min)
 
-
-        if(step%4 == 0 and len(memory) >= batch_size):
+        if(len(memory) >= batch_size):
             indices = np.random.choice(range(len(memory)), size = batch_size)
             
             # Using list comprehension to sample from replay buffer
@@ -98,7 +97,7 @@ while True:
 
             # Build the updated Q-values for the sampled future states
             # Use the target model for stability
-            future_rewards = model_target.predict(state_next_sample)
+            future_rewards = model_target.predict(state_next_sample, verbose = 0)
             # Q value = reward + discount factor * expected future reward
             updated_q_values = rewards_sample + gamma * tf.reduce_max(
                 future_rewards, axis=1
@@ -123,21 +122,14 @@ while True:
             grads = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-        if step % update_target_network == 0:
-            # update the the target network with new weights
-            model_target.set_weights(model.get_weights())
-            # Log details
-            template = "running reward: {:.2f} at episode {}, frame count {}"
-            print(template.format(running_reward, episode, step))
-
         if done:
             break
-        
-    score_history.append(score)
-    if len(score_history) > 100:
-        del score_history[:1]
-    running_reward = np.mean(score_history)
-
+    # update the the target network with new weights
+    if(episode%10 == 0):
+        model_target.set_weights(model.get_weights())
+    # Log details
+    #template = "running reward: {:.2f} at episode {}, frame count {}"
+    #print(template.format(score, episode, step))
 
     print('Episode:{} Score:{} Epsilon:{}'.format(episode, score, epsilon))
     if(score > max_score):

@@ -37,7 +37,7 @@ env = gym.make('ALE/Breakout-v5',        # Use all actions
 env = wrap_deepmind(env, frame_stack=True, scale=True)
 
 model = create_q_model()
-model.load_weights('weights\Episode_11_Score_2.0.h5')
+model.load_weights('weights\Episode_68_Score_4.0.h5')
 
 #height, width, channels = env.observation_space.shape
 actions = env.action_space.n
