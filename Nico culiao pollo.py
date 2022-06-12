@@ -53,6 +53,7 @@ while True:
         #time.sleep(0.1)
         if(step < random_frames or epsilon > np.random.rand(1)[0]):
             action = np.random.choice(actions)
+            
         else:
             # Predict action Q-values
             # From environment state
@@ -61,6 +62,7 @@ while True:
             action_probs = model(state_tensor, training=False)
             # Take best action
             action = tf.argmax(action_probs[0]).numpy()
+
         new_state, reward, done, info = env.step(action)
         score += reward
         new_state = np.array(new_state)
@@ -70,7 +72,9 @@ while True:
 
         if done:
             break
+        
     print('Episode:{} Score:{} Epsilon:{}'.format(episode, score, epsilon))
     if(score > 40):
         break
+
 env.close()
