@@ -50,7 +50,7 @@ delta_epsilon = 0.99 / 1000000
 batch_size = 32
 gamma = 0.99
 
-update_target_network = 10000
+update_target_network = 5000
 
 #height, width, channels = env.observation_space.shape
 actions = env.action_space.n
@@ -127,8 +127,8 @@ while True:
             # update the the target network with new weights
             model_target.set_weights(model.get_weights())
             # Log details
-            template = "running reward: {:.2f} at episode {}, frame count {}"
-            print(template.format(running_reward, episode, step))
+            #template = "running reward: {:.2f} at episode {}, frame count {}"
+            #print(template.format(running_reward, episode, step))
 
         if done:
             break
