@@ -30,6 +30,7 @@ def create_q_model():
 
 memory = deque(maxlen = 50000)
 score_history = []
+mean_score_history = []
 
 ale = ALEInterface()
 ale.loadROM(Breakout)
@@ -140,6 +141,7 @@ while True:
     score_history.append(score)
     if len(score_history) > 100:
         del score_history[:1]
+    mean_score_history.append(np.mean(score_history))
     print("\nScore promedio: ", str(np.mean(score_history)))
 
 
@@ -149,5 +151,7 @@ while True:
         max_score = score
     if(score > 40):
         break
+    
+    
 
 env.close()
