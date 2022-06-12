@@ -46,7 +46,7 @@ epsilon_min = 0.1
 random_episodes = 1000
 delta_epsilon = 1 / 10000
 
-batch_size = 128
+batch_size = 64
 gamma = 0.99
 
 #height, width, channels = env.observation_space.shape
@@ -89,7 +89,7 @@ while True:
         state = new_state
         epsilon = max(epsilon, epsilon_min)
 
-        if(step%5 == 0 and len(memory) >= batch_size):
+        if(step%4 == 0 and len(memory) >= batch_size):
             indices = np.random.choice(range(len(memory)), size = batch_size)
             
             # Using list comprehension to sample from replay buffer
@@ -137,14 +137,14 @@ while True:
         score_prom_history.append( score_prom )
         episode_history.append(episode)
         if(episode > 99 and episode%100 == 0):
+            model_target.set_weights(model.get_weights())
             plt.plot(episode_history, score_prom_history)
-            plt.savefig('figure/Episode:{}_Score:{}.png')
-
-        model_target.set_weights(model.get_weights())
+            plt.savefig('figure/Episode_{}_Score_{}.png'.format(episode,round(score_prom, 2)))
+        
         if(score_prom > max_score_prom):
             max_score_prom = score_prom
             model.save_weights('weights/Episode_{}_Score_{}.h5'.format(episode,round(score_prom, 2)))
-            print('SAVE Episode:{} Score:{}'.format(episode, round(score_prom, 2)))
+            print('____________SAVE____________')
 
         score_prom = 0
 
