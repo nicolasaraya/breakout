@@ -133,10 +133,10 @@ while True:
     score_prom += score/10.0
     # update the the target network with new weights
     if(episode > 9 and episode%10 == 0):
+        print('Episode:{} Score:{} Epsilon:{}'.format(episode, round(score_prom, 2), round(epsilon,3)))
         score_prom_history.append( score_prom )
         episode_history.append(episode)
         if(episode > 99 and episode%100 == 0):
-            print('Episode:{} Score:{} Epsilon:{}'.format(episode, round(score_prom, 2), round(epsilon,3)))
             plt.plot(episode_history, score_prom_history)
             plt.savefig('figure/Episode:{}_Score:{}.png')
 
@@ -147,7 +147,7 @@ while True:
             print('SAVE Episode:{} Score:{}'.format(episode, round(score_prom, 2)))
 
         score_prom = 0
-        
+
     if(score > 40):
         break
 
