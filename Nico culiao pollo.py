@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 from math import gamma
 from tabnanny import verbose
 import numpy as np
@@ -10,7 +11,7 @@ from baselines.common.atari_wrappers import wrap_deepmind
 from ale_py import ALEInterface
 from ale_py.roms import Breakout
 from collections import deque
-
+import livePlot
 
 def create_q_model():
     # Network defined by the Deepmind paper
@@ -151,7 +152,9 @@ while True:
         max_score = score
     if(score > 40):
         break
+
     
+    livePlot.livePlot(episode, mean_score_history)
     
 
 env.close()
