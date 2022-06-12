@@ -27,7 +27,8 @@ def create_q_model():
 
     return keras.Model(inputs=inputs, outputs=action)
 
-memory = deque(maxlen = 100000)
+memory = deque(maxlen = 400000)
+score_history = []
 
 ale = ALEInterface()
 ale.loadROM(Breakout)
@@ -38,21 +39,24 @@ env = wrap_deepmind(env, frame_stack=True, scale=True)
 
 model = create_q_model()
 model_target = create_q_model()
-optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=1.0)
+optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=0.95)
 loss_function = keras.losses.Huber()
 
 epsilon = 1.0
-epsilon_min = 0.1
+epsilon_min = 0.01
 random_frames = 100000
-delta_epsilon = 0.9 / 100000
+delta_epsilon = 0.99 / 1000000
 
 batch_size = 32
 gamma = 0.99
+
+update_target_network = 10000
 
 #height, width, channels = env.observation_space.shape
 actions = env.action_space.n
 env.unwrapped.get_action_meanings()
 max_steps = 10000
+running_reward = 0
 episode = 0
 max_score = 0
 while True:
@@ -119,10 +123,22 @@ while True:
             grads = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
+        if step % update_target_network == 0:
+            # update the the target network with new weights
+            model_target.set_weights(model.get_weights())
+            # Log details
+            template = "running reward: {:.2f} at episode {}, frame count {}"
+            print(template.format(running_reward, episode, step))
 
         if done:
             break
-    
+        
+    score_history.append(score)
+    if len(score_history) > 100:
+        del score_history[:1]
+    running_reward = np.mean(score_history)
+
+
     print('Episode:{} Score:{} Epsilon:{}'.format(episode, score, epsilon))
     if(score > max_score):
         model.save_weights('weights/Episode_{}_Score_{}.h5'.format(episode,score))
