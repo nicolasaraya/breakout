@@ -1,4 +1,5 @@
 from math import gamma
+from tabnanny import verbose
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -27,7 +28,7 @@ def create_q_model():
 
     return keras.Model(inputs=inputs, outputs=action)
 
-memory = deque(maxlen = 400000)
+memory = deque(maxlen = 50000)
 score_history = []
 
 ale = ALEInterface()
@@ -43,9 +44,10 @@ optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=0.95)
 loss_function = keras.losses.Huber()
 
 epsilon = 1.0
-epsilon_min = 0.01
-random_frames = 100000
-delta_epsilon = 0.99 / 1000000
+epsilon_min = 0.1
+random_frames = 50
+delta_epsilon = 0.9 / 50000
+
 
 batch_size = 32
 gamma = 0.99
@@ -55,8 +57,7 @@ update_target_network = 5000
 #height, width, channels = env.observation_space.shape
 actions = env.action_space.n
 env.unwrapped.get_action_meanings()
-max_steps = 10000
-running_reward = 0
+max_steps = 1000000
 episode = 0
 max_score = 0
 while True:
@@ -65,7 +66,8 @@ while True:
     episode += 1
     for step in range(1, max_steps):
         #time.sleep(0.1)
-        if(step < random_frames or epsilon > np.random.rand(1)[0]):
+        #if(step < random_frames or epsilon > np.random.rand(1)[0]):
+        if(epsilon > np.random.rand(1)[0]):
             action = np.random.choice(actions)
         else:    
             # Predict action Q-values
@@ -77,14 +79,17 @@ while True:
             action = tf.argmax(action_probs[0]).numpy()
 
         new_state, reward, done, info = env.step(action)
+        if done:
+            reward -= 1
         score += reward
         new_state = np.array(new_state)
         memory.append((state, new_state, action, reward, done))
         epsilon -= delta_epsilon
         epsilon = max(epsilon, epsilon_min)
+        state = new_state
 
-
-        if(step%4 == 0 and len(memory) >= batch_size):
+        
+        if(step % 4 == 0 and len(memory) >= batch_size):
             indices = np.random.choice(range(len(memory)), size = batch_size)
             
             # Using list comprehension to sample from replay buffer
@@ -98,11 +103,9 @@ while True:
 
             # Build the updated Q-values for the sampled future states
             # Use the target model for stability
-            future_rewards = model_target.predict(state_next_sample)
+            future_rewards = model_target.predict(state_next_sample, verbose = 0)
             # Q value = reward + discount factor * expected future reward
-            updated_q_values = rewards_sample + gamma * tf.reduce_max(
-                future_rewards, axis=1
-            )
+            updated_q_values = rewards_sample + gamma * tf.reduce_max(future_rewards, axis=1)
 
             # If final frame set the last value to -1
             updated_q_values = updated_q_values * (1 - done_sample) - done_sample
@@ -118,6 +121,7 @@ while True:
                 q_action = tf.reduce_sum(tf.multiply(q_values, masks), axis=1)
                 # Calculate loss between new Q-value and old Q-value
                 loss = loss_function(updated_q_values, q_action)
+            
 
             # Backpropagation
             grads = tape.gradient(loss, model.trainable_variables)
@@ -136,7 +140,7 @@ while True:
     score_history.append(score)
     if len(score_history) > 100:
         del score_history[:1]
-    running_reward = np.mean(score_history)
+    print("\nScore promedio: ", str(np.mean(score_history)))
 
 
     print('Episode:{} Score:{} Epsilon:{}'.format(episode, score, epsilon))
