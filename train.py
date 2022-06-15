@@ -109,25 +109,29 @@ while True:
             
         if done:
             break
-
+    
+    # print()
     score_prom += score/10.0
-    # update the the target network with new weights
     if(episode > 9 and episode%10 == 0):
         print('Episode:{} Score:{} Epsilon:{}'.format(episode, round(score_prom, 2), round(epsilon,3)))
         score_prom_history.append( score_prom )
         episode_history.append(episode)
-        if(episode > 99 and episode%100 == 0):
-            model_target.set_weights(model.get_weights())
-            plt.clf()
-            plt.plot(episode_history, score_prom_history)
-            plt.savefig('modelos/graphs/{}.png'.format(MODELO,episode,round(score_prom, 2)))
-        
         if(score_prom > max_score_prom):
             max_score_prom = score_prom
             model.save_weights('modelos/weights/{}.h5'.format(MODELO,episode,round(score_prom, 2)))
             print('____________SAVE____________')
         score_prom = 0
-    
+
+    #save graph
+    if(episode >= 100 and episode%100 == 0):
+        plt.clf()
+        plt.plot(episode_history, score_prom_history)
+        plt.savefig('modelos/graphs/{}.png'.format(MODELO,episode,round(score_prom, 2)))
+
+    # update the the target network with new weights
+    if(episode>= update_q_after_episodes):
+        model_target.set_weights(model.get_weights())
+
     if(score > 40):
         break
 

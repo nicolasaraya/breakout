@@ -6,9 +6,10 @@ memory_size = 100000
 learning_rate = 0.0005
 epsilon = 1.0
 epsilon_min = 0.0
-random_episodes = 2500
+random_episodes = 5000
 update_after_actions = 16
-episodes_to_epsilon_min = 7500
+update_q_after_episodes = 20
+episodes_to_epsilon_min = 15000
 delta_epsilon = (epsilon - epsilon_min) / episodes_to_epsilon_min
 loss_function = keras.losses.Huber()
 optimizer = keras.optimizers.Adam(learning_rate= learning_rate)
