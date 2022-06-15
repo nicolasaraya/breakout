@@ -1,4 +1,4 @@
-from math import gamma
+from joblib import PrintTime
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -9,25 +9,18 @@ from baselines.common.atari_wrappers import wrap_deepmind
 from ale_py import ALEInterface
 from ale_py.roms import Breakout
 from collections import deque
+import glob
 
+###### Cambiar solo estos dartos ######
+MODELO = 'mejor_modelo.py'
+PESOS_MODELO = 'Episode_10400_Score_6.7.h5'
+#######################################
 
-def create_q_model():
-    # Network defined by the Deepmind paper
-    inputs = layers.Input(shape=(84, 84, 4))
-
-    # Convolutions on the frames on the screen
-    layer1 = layers.Conv2D(32, 8, strides=4, activation="relu")(inputs)
-    layer2 = layers.Conv2D(64, 4, strides=2, activation="relu")(layer1)
-    layer3 = layers.Conv2D(64, 3, strides=1, activation="relu")(layer2)
-
-    layer4 = layers.Flatten()(layer3)
-
-    layer5 = layers.Dense(512, activation="relu")(layer4)
-    action = tf.keras.layers.Dense(4, activation="linear")(layer5)
-
-    return keras.Model(inputs=inputs, outputs=action)
-
-memory = deque(maxlen = 100000)
+codigo_modelo = glob.glob('./modelos/{}'.format(MODELO))
+for linea_de_codigo in codigo_modelo: 
+     o = open(linea_de_codigo)  
+     r = o.read()       
+     exec(r)
 
 ale = ALEInterface()
 ale.loadROM(Breakout)
@@ -35,33 +28,32 @@ env = gym.make('ALE/Breakout-v5',        # Use all actions
     render_mode='human'                  # None | human | rgb_array
 )
 env = wrap_deepmind(env, frame_stack=True, scale=True)
+env.seed(seed)
 
 model = create_q_model()
-model.load_weights('weights\Episode_1341_Score_6.0.h5')
+model.load_weights('modelos/weights/{}'.format(PESOS_MODELO))
 
-#height, width, channels = env.observation_space.shape
-actions = env.action_space.n
-env.unwrapped.get_action_meanings()
-max_steps = 10000
 episode = 0
 while True:
     state = np.array(env.reset())
     score = 0
     episode += 1
     for step in range(1, max_steps):
+        # From environment state
         state_tensor = tf.convert_to_tensor(state)
         state_tensor = tf.expand_dims(state_tensor, 0)
         action_probs = model(state_tensor, training=False)
+        # Take best action
         action = tf.argmax(action_probs[0]).numpy()
+
         new_state, reward, done, info = env.step(action)
         score += reward
         new_state = np.array(new_state)
-        memory.append((state, new_state, action, reward, done))
         if(done):
-            if(score > 40):
-                break
-            else:
-                env.step(1)
+            break
     print('Episode:{} Score:{}'.format(episode, score))
+    if(score > 40):
+        print('__________WIN__________(❁´◡`❁)')
+        break
 
 env.close()

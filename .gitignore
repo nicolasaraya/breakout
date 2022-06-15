@@ -1,3 +1,4 @@
 /__pycache__/
-/weights/
-/figure/
+/modelos/__pycache__/
+/modelos/graphs/
+/modelos/weights/
