@@ -7,6 +7,7 @@ learning_rate = 0.0005
 epsilon = 1.0
 epsilon_min = 0.0
 random_episodes = 2500
+update_after_actions = 16
 episodes_to_epsilon_min = 7500
 delta_epsilon = (epsilon - epsilon_min) / episodes_to_epsilon_min
 loss_function = keras.losses.Huber()

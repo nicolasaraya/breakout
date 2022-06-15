@@ -11,7 +11,7 @@ from ale_py.roms import Breakout
 from collections import deque
 import glob
 
-###### Cambiar solo estos dartos ######
+###### Cambiar solo estos datos ######
 MODELO = 'modelo_j_1'
 #######################################
 
@@ -70,7 +70,7 @@ while True:
         memory.append((state, new_state, action, reward, done))
         state = new_state
 
-        if(step%16 == 0 and len(memory) >= batch_size):
+        if(step % update_after_actions == 0 and len(memory) >= batch_size):
             indices = np.random.choice(range(len(memory)), size = batch_size)
             # Using list comprehension to sample from replay buffer
             state_sample = np.array([memory[i][0] for i in indices])
