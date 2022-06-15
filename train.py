@@ -12,7 +12,7 @@ from collections import deque
 import glob
 
 ###### Cambiar solo estos dartos ######
-MODELO = 'mejor_modelo.py'
+MODELO = 'modelo_j_1.py'
 #######################################
 
 codigo_modelo = glob.glob('./modelos/{}'.format(MODELO))
@@ -120,11 +120,11 @@ while True:
             model_target.set_weights(model.get_weights())
             plt.clf()
             plt.plot(episode_history, score_prom_history)
-            plt.savefig('modelos/graphs/{}_Episode_{}_Score_{}.png'.format(MODELO,episode,round(score_prom, 2)))
+            plt.savefig('modelos/graphs/{}.png'.format(MODELO,episode,round(score_prom, 2)))
         
         if(score_prom > max_score_prom):
             max_score_prom = score_prom
-            model.save_weights('modelos/weights/{}_Episode_{}_Score_{}.h5'.format(MODELO,episode,round(score_prom, 2)))
+            model.save_weights('modelos/weights/{}.h5'.format(MODELO,episode,round(score_prom, 2)))
             print('____________SAVE____________')
         score_prom = 0
     
