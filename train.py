@@ -12,10 +12,10 @@ from collections import deque
 import glob
 
 ###### Cambiar solo estos dartos ######
-MODELO = 'modelo_j_1.py'
+MODELO = 'modelo_j_1'
 #######################################
 
-codigo_modelo = glob.glob('./modelos/{}'.format(MODELO))
+codigo_modelo = glob.glob('./modelos/{}.py'.format(MODELO))
 for linea_de_codigo in codigo_modelo: 
      o = open(linea_de_codigo)  
      r = o.read()       

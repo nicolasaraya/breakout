@@ -12,11 +12,11 @@ from collections import deque
 import glob
 
 ###### Cambiar solo estos dartos ######
-MODELO = 'mejor_modelo.py'
-PESOS_MODELO = 'Episode_10400_Score_6.7.h5'
+MODELO = 'mejor_modelo'
+PESOS_MODELO = 'Episode_10400_Score_6.7'
 #######################################
 
-codigo_modelo = glob.glob('./modelos/{}'.format(MODELO))
+codigo_modelo = glob.glob('./modelos/{}.py'.format(MODELO))
 for linea_de_codigo in codigo_modelo: 
      o = open(linea_de_codigo)  
      r = o.read()       
@@ -31,7 +31,7 @@ env = wrap_deepmind(env, frame_stack=True, scale=True)
 env.seed(seed)
 
 model = create_q_model()
-model.load_weights('modelos/weights/{}'.format(PESOS_MODELO))
+model.load_weights('modelos/weights/{}.h5'.format(PESOS_MODELO))
 
 episode = 0
 while True:
