@@ -12,7 +12,7 @@ from collections import deque
 import glob
 
 ###### Cambiar solo estos datos ######
-MODELO = 'modelo_j_1'
+MODELO = 'modelo_j_3'
 #######################################
 
 codigo_modelo = glob.glob('./modelos/{}.py'.format(MODELO))

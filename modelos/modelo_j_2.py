@@ -3,13 +3,13 @@ gamma = 0.99
 batch_size = 256 #256 max
 max_steps = 20000
 memory_size = 100000
-learning_rate = 0.0005
+learning_rate = 0.001
 epsilon = 1.0
-epsilon_min = 0.0
-random_episodes = 5000
+epsilon_min = 0.1
+random_episodes = 2000
 update_after_actions = 16
-update_q_after_episodes = 50
-episodes_to_epsilon_min = 15000
+update_q_after_episodes = 20
+episodes_to_epsilon_min = 8000
 delta_epsilon = (epsilon - epsilon_min) / episodes_to_epsilon_min
 loss_function = keras.losses.Huber()
 optimizer = keras.optimizers.Adam(learning_rate= learning_rate)
@@ -20,7 +20,7 @@ def create_q_model():
 
     # Convolutions on the frames on the screen
     layer1 = layers.Conv2D(32,(16,8), strides=4, activation="relu")(inputs)
-    layer2 = layers.Conv2D(64, 4, strides=2, activation="relu")(layer1)
+    layer2 = layers.Conv2D(128, 16, strides=4, activation="relu")(layer1)
     #layer3 = layers.Conv2D(84, 1, strides=1, activation="relu")(layer2)
 
     layer4 = layers.Flatten()(layer2)
