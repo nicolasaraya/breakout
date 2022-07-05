@@ -12,6 +12,11 @@ from ale_py import ALEInterface
 from ale_py.roms import Breakout
 from collections import deque
 import livePlot
+from skimage.color import rgb2gray
+from skimage.transform import resize
+import matplotlib.pyplot as plt
+
+plt.title("Mean Score vs Episodes")
 
 def create_q_model():
     # Network defined by the Deepmind paper
@@ -29,7 +34,8 @@ def create_q_model():
 
     return keras.Model(inputs=inputs, outputs=action)
 
-memory = deque(maxlen = 50000)
+
+memory = deque(maxlen = 400000)
 score_history = []
 mean_score_history = []
 
@@ -46,15 +52,15 @@ optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=0.95)
 loss_function = keras.losses.Huber()
 
 epsilon = 1.0
-epsilon_min = 0.1
+epsilon_min = 0.01
 random_frames = 50
-delta_epsilon = 0.9 / 50000
+delta_epsilon = 0.99 / 100000
 
 
 batch_size = 32
 gamma = 0.99
 
-update_target_network = 5000
+update_target_network = 10000
 
 #height, width, channels = env.observation_space.shape
 actions = env.action_space.n
