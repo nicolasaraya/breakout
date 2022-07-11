@@ -6,6 +6,8 @@ import sys, os
 import tensorflow as tf
 import tensorflow.compat.v1 as tfc
 import keras
+import datetime
+import gym.wrappers
 from other.PreprocessAtari import PreprocessAtari
 from other.FrameBuffer import FrameBuffer
 from other.DQNAgent import DQNAgent
@@ -95,7 +97,6 @@ env.reset()
 state_dim = env.observation_space.shape
 n_actions = env.action_space.n
 
-
 '''
 for _ in range(50):
     obs, _, _, _ = env.step(env.action_space.sample())
@@ -115,9 +116,7 @@ agent = DQNAgent("dqn_agent", state_dim, n_actions, epsilon=0.5)
 sess.run(tfc.global_variables_initializer())
 ##agente sin entrenar
 print (evaluate(env, agent, n_games=1))
-
 ##experiencia
-
 target_network = DQNAgent("target_network", state_dim, n_actions)
 load_weigths_into_target_network(agent, target_network) 
 sess.run([tf.assert_equal(w, w_target) for w, w_target in zip(agent.weights, target_network.weights)]);
@@ -151,16 +150,17 @@ train_step = tfc.train.AdamOptimizer(1e-3).minimize(td_loss, var_list=agent.weig
 
 sess.run(tfc.global_variables_initializer())
 
-
 mean_rw_history = []
 td_loss_history = []
 
 exp_replay = ReplayBuffer(10**4)
 play_and_record(agent, env, exp_replay, n_steps=10000)
 moving_average = lambda x, span, **kw: DataFrame({'x':np.asarray(x)}).x.ewm(span=span, **kw).mean().values
+num_episodes = 10**5
 
-for i in trange(10**5):
-    
+agent.epsilon = 1
+
+for i in trange(num_episodes):
     # play
     play_and_record(agent, env, exp_replay, 10)
     
@@ -171,26 +171,41 @@ for i in trange(10**5):
     # adjust agent parameters
     if i % 500 == 0:
         load_weigths_into_target_network(agent, target_network)
-        agent.epsilon = max(agent.epsilon * 0.99, 0.01)
+        agent.epsilon = max(agent.epsilon - (agent.epsilon/(num_episodes/500)), 0.01)
         mean_rw_history.append(evaluate(make_env(), agent, n_games=3))
     
-    if i % 100 == 0:
+    if i % 1000 == 0:
+        #if i == 0: 
+            #continue
+        s = datetime.datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
         clear_output(True)
         print("buffer size = %i, epsilon = %.5f" % (len(exp_replay), agent.epsilon))
         
-        plt.subplot(1,2,1)
-        plt.title("mean reward per game")
-        plt.plot(mean_rw_history)
-        plt.grid()
 
-        assert not np.isnan(loss_t)
-        plt.figure(figsize=[12, 4])
-        plt.subplot(1,2,2)
-        plt.title("TD loss history (moving average)")
-        plt.plot(moving_average(np.array(td_loss_history), span=100, min_periods=100))
-        plt.grid()
-        #plt.show()
-    
+        fig, (plt1, plt2) = plt.subplots(2)
+        fig.suptitle('Breakout training')
+        plt1.set_title("Mean reward per game")
+        plt1.plot(mean_rw_history, 'tab:blue')
+        plt1.set(xlabel='Episode', ylabel  = 'Reward')
+        plt1.grid()
+        plt2.set_title("TD loss history (moving average)")
+        plt2.plot(moving_average(np.array(td_loss_history), span=100, min_periods=100), 'tab:red')
+        plt2.set(xlabel='Episode', ylabel  = 'Value')
+        plt2.grid()
+        fig.tight_layout()
+        fig.savefig('./imgs/graphic_2_{}.png'.format(s))
+
     if np.mean(mean_rw_history[-10:]) > 10.:
         break
-plt.show
+
+    if i % 10000 == 0:
+        if i != 0 : 
+            s = datetime.datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
+            agent.network.save_weights('./model/weights_{}.h5'.format(s))
+
+#plt.show
+
+##demo
+
+
+agent.epsilon=0
