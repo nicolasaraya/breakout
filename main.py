@@ -171,7 +171,7 @@ for i in trange(num_episodes):
     # adjust agent parameters
     if i % 500 == 0:
         load_weigths_into_target_network(agent, target_network)
-        agent.epsilon = max(agent.epsilon - (agent.epsilon/(num_episodes/500)), 0.01)
+        agent.epsilon = max(agent.epsilon - (agent.epsilon/(( num_episodes*0.9 ) / 500)), 0.01)
         mean_rw_history.append(evaluate(make_env(), agent, n_games=3))
     
     if i % 1000 == 0:
@@ -190,11 +190,11 @@ for i in trange(num_episodes):
         plt1.grid()
         plt2.set_title("TD loss history (moving average)")
         plt2.plot(moving_average(np.array(td_loss_history), span=100, min_periods=100), 'tab:red')
-        plt2.set(xlabel='Episode', ylabel  = 'Value')
+        plt2.set(xlabel='Movement', ylabel  = 'Value')
         plt2.grid()
         fig.tight_layout()
         fig.savefig('./imgs/graphic_2_{}.png'.format(s))
-
+        fig.clear()
     if np.mean(mean_rw_history[-10:]) > 10.:
         break
 
