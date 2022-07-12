@@ -156,7 +156,7 @@ td_loss_history = []
 exp_replay = ReplayBuffer(10**4)
 play_and_record(agent, env, exp_replay, n_steps=10000)
 moving_average = lambda x, span, **kw: DataFrame({'x':np.asarray(x)}).x.ewm(span=span, **kw).mean().values
-num_episodes = 10**5
+num_episodes = 10**6
 
 agent.epsilon = 1
 
@@ -195,8 +195,8 @@ for i in trange(num_episodes):
         fig.tight_layout()
         fig.savefig('./imgs/graphic_2_{}.png'.format(s))
         fig.clear()
-    if np.mean(mean_rw_history[-10:]) > 10.:
-        break
+    #if np.mean(mean_rw_history[-10:]) > 10.:
+    #    break
 
     if i % 10000 == 0:
         if i != 0 : 
