@@ -19,5 +19,6 @@
 - pip install pandas
 - pip install matplot
 - pip install tqdm
+- pip install keras
 - pip instal IPython
 - `ale-import-roms roms`
