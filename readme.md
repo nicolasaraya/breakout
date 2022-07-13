@@ -7,9 +7,9 @@
     * `$ python main.py --test_dqn N`  with N episodes
 
 * **Test Agent:**
-        -`$python main.py --train_dqn` train without render
-        
-        -`$ python main.py --train_dqn --render` train with render
+    * `$python main.py --train_dqn` train without render
+    * `$ python main.py --train_dqn --render` train with render
+
 
 ## requirements:
 - VS Build Toolkit (windows)
