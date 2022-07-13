@@ -1,5 +1,5 @@
 # Breakout
-![Imgur Image](https://tcf.admeen.org/game/17500/17474/400x246/atari-breakout.jpg)
+![Imgur Image](https://tcf.admeen.org/game/17500/17474/400x246/atari-breakout.jpg)		
 
 ## Usage
 * **Train DQN:** 
@@ -11,7 +11,7 @@
     * `$ python main.py --train_dqn --render` train with render
 
 
-## requirements:
+## Requirements:
 - VS Build Toolkit (windows)
 - pip install tensorflow
 - pip install ale-py
