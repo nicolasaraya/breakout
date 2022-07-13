@@ -11,7 +11,7 @@
     * `$ python main.py --train_dqn --render` train with render
 
 
-## Requirements:
+## Requirements
 - VS Build Toolkit (windows)
 - pip install tensorflow
 - pip install ale-py
