@@ -191,14 +191,13 @@ def train(args):
         td_loss_history.append(loss_t)
         
         # adjust agent parameters
-        if i % 500 == 0:
+        eps_or = agent.epsilon
+        if i % 500 == 0 and i != 0:
             load_weigths_into_target_network(agent, target_network)
-            agent.epsilon = max(agent.epsilon - ( agent.epsilon/(num_episodes/ (500*1.2)) ), 0.01)
+            agent.epsilon = max(agent.epsilon - ( eps_or/(num_episodes/ (500*1.2)) ), 0.01)
             mean_rw_history.append(evaluate(make_env(), agent, n_games=3))
         
-        if i % 1000 == 0:
-            #if i == 0: 
-                #continue
+        if i % 1000 == 0 and i != 0:
             s = datetime.datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
             clear_output(True)
             print("buffer size = %i, epsilon = %.5f" % (len(exp_replay), agent.epsilon))
