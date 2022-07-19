@@ -27,8 +27,8 @@ ale.loadROM(Breakout)
 env = gym.make('ALE/Breakout-v5',        # Use all actions
     render_mode='human'                  # None | human | rgb_array
 )
-env = wrap_deepmind(env, frame_stack=True, scale=True)
-env.seed(seed)
+env = PreprocessAtari(env)
+env = FrameBuffer(env ,n_frames=4, dim_order='tensorflow')
 
 model = create_q_model()
 model.load_weights('modelos/weights/{}.h5'.format(PESOS_MODELO))
