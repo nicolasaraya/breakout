@@ -34,23 +34,36 @@ def make_env(render = False):
     ale = ALEInterface()
     ale.loadROM(Breakout)
     if(render):
-        env = gym.make('ALE/Breakout-v5',        # Use all actions
-            render_mode='human'                 # None | human | rgb_array
-        )
+         env = gym.make('ALE/Breakout-v5',
+                obs_type='rgb',                   # ram | rgb | grayscale
+                frameskip=4,                      # frame skip
+                mode=None,                        # game mode, see Machado et al. 2018
+                difficulty=None,                  # game difficulty, see Machado et al. 2018
+                repeat_action_probability=0.25,   # Sticky action probability
+                full_action_space=False,          # Use all actions
+                render_mode='human'                  # None | human | rgb_array
+            )
     else: 
-        env = gym.make('ALE/Breakout-v5',        # Use all actions
-                render_mode='rgb_array'                 # None | human | rgb_array
+        env = gym.make('ALE/Breakout-v5',
+                obs_type='rgb',                   # ram | rgb | grayscale
+                frameskip=4,                      # frame skip
+                mode=None,                        # game mode, see Machado et al. 2018
+                difficulty=None,                  # game difficulty, see Machado et al. 2018
+                repeat_action_probability=0.25,   # Sticky action probability
+                full_action_space=False,          # Use all actions
+                render_mode=None                  # None | human | rgb_array
             )
     env = PreprocessAtari(env)
     env = FrameBuffer(env, n_frames=4, dim_order='tensorflow')
     return env
 
-def evaluate(env, agent, n_games=1, greedy=False, t_max=10000, render = None):
+def evaluate(env, agent, n_games=1, greedy=False, t_max=10000, render = None, test=False):
     """ Plays n_games full games. If greedy, picks actions as argmax(qvalues). Returns mean reward. """
     rewards = []
     for _ in range(n_games):
         s = env.reset()
         reward = 0
+        if test: env.step(1)
         for _ in range(t_max):
             qvalues = agent.get_qvalues([s])
             action = qvalues.argmax(axis=-1)[0] if greedy else agent.sample_actions(qvalues)[0]
@@ -172,13 +185,15 @@ def train(args):
 
     exp_replay = ReplayBuffer(10**5)
     play_and_record(agent, env, exp_replay, n_steps=10000)
+    agent = loadLastState(env)
     moving_average = lambda x, span, **kw: DataFrame({'x':np.asarray(x)}).x.ewm(span=span, **kw).mean().values
     num_episodes = args.train_dqn
     agent.epsilon = 1
+    eps_or = agent.epsilon
     print("Training with %i episodes"  %num_episodes)
     for i in trange(num_episodes): #trange muestra progreso en %
         # play
-        play_and_record(agent, env, exp_replay, 10)
+        play_and_record(agent, env, exp_replay, 30)
         
         # train
         _, loss_t = sess.run([train_step, td_loss], sample_batch(exp_replay, 
@@ -191,10 +206,10 @@ def train(args):
         td_loss_history.append(loss_t)
         
         # adjust agent parameters
-        eps_or = agent.epsilon
+        
         if i % 500 == 0 and i != 0:
             load_weigths_into_target_network(agent, target_network)
-            agent.epsilon = max(agent.epsilon - ( eps_or/(num_episodes/ (500*1.2)) ), 0.01)
+            agent.epsilon = max(agent.epsilon -  0.05 , 0.01)
             mean_rw_history.append(evaluate(make_env(), agent, n_games=3))
         
         if i % 1000 == 0 and i != 0:
@@ -222,35 +237,48 @@ def train(args):
                 s = datetime.datetime.now().strftime("%d-%m-%Y_%H_%M_%S")
                 agent.network.save_weights('./model/weights_{}.h5'.format(s + "eps_" + str(agent.epsilon)))
 
-def test(args):
+
+def loadLastState(env):
     files = [f for f in os.listdir("./model") if os.path.isfile(os.path.join("./model", f))]
     x = files[len(files)-1] #ultimo peso
     path = "./model/" + x
 
     print("Model path: ")
     print(path)
+    n_actions = env.action_space.n
+    state_dim = env.observation_space.shape
+    agent = DQNAgent("dqn_agent", state_dim, n_actions, epsilon=0)
+    agent.network.load_weights(path)
+    return agent
+
+def test(args):
+    
     env = make_env()
     if args.render:
         env = make_env(render = True)
     env.reset()
-    n_actions = env.action_space.n
-    state_dim = env.observation_space.shape
+    
+    agent = loadLastState(env)
 
     ##network 
     tfc.reset_default_graph()
     sess = tfc.InteractiveSession()
-    agent = DQNAgent("dqn_agent", state_dim, n_actions, epsilon=0)
-    agent.network.load_weights(path)
+    
     agent.epsilon = 0
     n_games = 1
     sess.run(tfc.global_variables_initializer())
-    result = evaluate(env, agent, n_games=n_games, render=args.render)
+    result = evaluate(env, agent, n_games=n_games, render=args.render, test = True)
     print ("Reward mean: %i , games = %i" % (result,n_games))
     
 
 if __name__ == '__main__':
+    env = make_env()
+    print(env.action_space)
+    #env.sample_actions
+
     args = parse()
     if args.train_dqn:
         train(args)
     if args.test_dqn:
         test(args)
+

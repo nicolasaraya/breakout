@@ -12,12 +12,22 @@ class DQNAgent:
             
             #< Define your network body here. Please make sure you don't use any layers created elsewhere >
             self.network = Sequential()
+            
             self.network.add(Conv2D(filters=16, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
             self.network.add(Conv2D(filters=32, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
             self.network.add(Conv2D(filters=64, kernel_size=(3, 3), strides=(2, 2), activation='relu'))
             self.network.add(Flatten())
             self.network.add(Dense(256, activation='relu'))
             self.network.add(Dense(n_actions, activation='linear'))
+            '''
+
+            self.network.add(Conv2D(32, (8, 8), strides=4, activation='relu',use_bias=False, input_shape=state_shape,kernel_initializer=tfc.variance_scaling_initializer(scale=2)))
+            self.network.add(Conv2D(64, (4, 4), strides=2, activation='relu',use_bias=False,kernel_initializer=tfc.variance_scaling_initializer(scale=2)))
+            self.network.add(Conv2D(64, (3, 3), strides=1, activation='relu',use_bias=False,kernel_initializer=tfc.variance_scaling_initializer(scale=2)))
+            #self.network.add(Conv2D(1024, (7, 7), strides=1, activation='relu',use_bias=False,kernel_initializer=tfc.variance_scaling_initializer(scale=2)))
+            self.network.add(Flatten())
+            self.network.add(Dense(n_actions, activation='linear',kernel_initializer=tfc.variance_scaling_initializer(scale=2)))
+            '''
             
             # prepare a graph for agent step
             self.state_t = tfc.placeholder('float32', [None,] + list(state_shape))
